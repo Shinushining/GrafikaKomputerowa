@@ -1,2 +1,4 @@
 C:\Users\lucza\OneDrive\Dokumenty\Grafika komputerowa\projekt1\Debug\projekt1.exe
 C:\Users\lucza\OneDrive\Dokumenty\Grafika komputerowa\projekt1\Debug\projekt1.pdb
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\Debug\projekt1.exe
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\Debug\projekt1.pdb

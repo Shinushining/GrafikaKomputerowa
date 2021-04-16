@@ -1,6 +1,8 @@
 ﻿
 #include <iostream>
 #include <stdio.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 // Nagłówki
 #include <GL/glew.h>
 #include <SFML/Window.hpp>
@@ -15,14 +17,16 @@ const GLchar* vertexSource = R"glsl(
 #version 150 core
 in vec3 position;
 in vec3 color;
+in vec2 aTexCoord;
+out vec2 TexCoord;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
 out vec3 Color;
 void main(){
-Color = color;
-
-gl_Position = proj*view*model*vec4(position, 1.0);
+	Color = color;
+	TexCoord=aTexCoord;
+	gl_Position = proj*view*model*vec4(position, 1.0);
 
 }
 )glsl";
@@ -31,9 +35,13 @@ const GLchar* fragmentSource = R"glsl(
 #version 150 core
 in vec3 Color;
 out vec4 outColor;
+in vec2 TexCoord;
+uniform sampler2D texture1;
+uniform sampler2D texture2;
 void main()
 {
-outColor = vec4(Color, 1.0);
+outColor=texture(texture1,TexCoord);
+//outColor = vec4(Color, 1.0);
 }
 )glsl";
 
@@ -53,53 +61,54 @@ void kostka(int buffer) {
 	int punkty = 36;
 
 	float vertices[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 	
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 	
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-		0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 		
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-		0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
 		
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f
-	
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+		0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+		
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
+		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f
+		
 	
 	};
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * punkty * 6, vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * punkty * 8, vertices, GL_STATIC_DRAW);
 }
 
 void ustawKamereMysz(GLint _uniView,float _elapsedTime, const sf::Window& _window) {
@@ -307,13 +316,16 @@ int main()
 	// Specifikacja formatu danych wierzchołkowych
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), 0);
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), 0);
 	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
 	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	GLint TexCoord = glGetAttribLocation(shaderProgram, "aTexCoord");
+	glEnableVertexAttribArray(TexCoord);
+	glVertexAttribPointer(TexCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, glm::radians(-20.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	GLint uniTrans = glGetUniformLocation(shaderProgram, "model");
 	glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(model));
@@ -330,6 +342,52 @@ int main()
 	
 
 	glEnable(GL_DEPTH_TEST);
+
+	unsigned int texture1;
+
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load("metal.bmp", &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		cout << "Failed to load texture" << endl;
+	}
+	stbi_image_free(data);
+
+
+	unsigned int texture2;
+
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	stbi_set_flip_vertically_on_load(true);
+	data = stbi_load("crate.bmp", &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		cout << "Failed to load texture" << endl;
+	}
+	stbi_image_free(data);
+
+	glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1);
+
 	// Rozpoczęcie pętli zdarzeń
 	bool running = true;
 
@@ -411,8 +469,16 @@ int main()
 
 		// Narysowanie wielokąta na podstawie dowolnej ilości wierzchołków
 		//glDrawArrays(prymityw, 0, boki);
-		glDrawArrays(prymityw, 0, 36);
+		//glDrawArrays(prymityw, 0, 36);
 		
+		//ustawianie wielu tekstur
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glDrawArrays(GL_TRIANGLES, 0, 12);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+		glDrawArrays(GL_TRIANGLES, 12, 36);
+
+
 		// Wymiana buforów tylni/przedni
 		window.display();
 	}
