@@ -354,7 +354,7 @@ int main()
 
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load("metal.bmp", &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load("cat1.jpg", &width, &height, &nrChannels, 0);
 	if (data) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -375,7 +375,7 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	stbi_set_flip_vertically_on_load(true);
-	data = stbi_load("crate.bmp", &width, &height, &nrChannels, 0);
+	data = stbi_load("karton.jpg", &width, &height, &nrChannels, 0);
 	if (data) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -473,10 +473,10 @@ int main()
 		
 		//ustawianie wielu tekstur
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texture1);
-		glDrawArrays(GL_TRIANGLES, 0, 12);
 		glBindTexture(GL_TEXTURE_2D, texture2);
-		glDrawArrays(GL_TRIANGLES, 12, 36);
+		glDrawArrays(GL_TRIANGLES, 0, 24);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glDrawArrays(GL_TRIANGLES, 24, 36);
 
 
 		// Wymiana buforów tylni/przedni
