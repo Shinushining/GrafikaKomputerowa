@@ -16,7 +16,18 @@ C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cp
           [
               T=float
           ]
-C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(405,14): warning C4244: "inicjowanie": konwersja z "sf::Int64" do "float", możliwa utrata danych
-C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(458,49): warning C4244: "argument": konwersja z "sf::Int64" do "float", możliwa utrata danych
-C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(463,51): warning C4244: "argument": konwersja z "sf::Int64" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(216,16): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(217,16): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(224,16): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(226,18): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(227,17): warning C4244: "inicjowanie": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(433,14): warning C4244: "inicjowanie": konwersja z "sf::Int64" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(501,49): warning C4244: "argument": konwersja z "sf::Int64" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(506,51): warning C4244: "argument": konwersja z "sf::Int64" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(528,81): warning C4305: "argument": obcięcie z "double" do "float"
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(528,70): warning C4244: "argument": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(537,80): warning C4305: "argument": obcięcie z "double" do "float"
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(537,70): warning C4244: "argument": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(548,79): warning C4305: "argument": obcięcie z "double" do "float"
+C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\projekt1.cpp(555,78): warning C4305: "argument": obcięcie z "double" do "float"
   projekt1.vcxproj -> C:\Users\lucza\OneDrive\Dokumenty\GitHub\GrafikaKomputerowa\projekt1\Debug\projekt1.exe
