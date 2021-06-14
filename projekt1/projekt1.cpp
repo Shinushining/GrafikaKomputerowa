@@ -10,6 +10,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 // Kody shaderów
@@ -40,8 +42,9 @@ uniform sampler2D texture1;
 uniform sampler2D texture2;
 void main()
 {
-outColor=texture(texture1,TexCoord);
+//outColor=texture(texture1,TexCoord);
 //outColor = vec4(Color, 1.0);
+outColor = vec4(1.0,1.0,1.0,1.0);
 }
 )glsl";
 
@@ -235,6 +238,145 @@ void StereoProjection(GLuint shaderProgram_, float _left, float _right, float _b
 	glUniformMatrix4fv(uniProj, 1, GL_FALSE, glm::value_ptr(proj));
 }
 
+void LoadModelOBJ(int& punkty, const char* filename, int buffer) {
+	int vert_num = 0;
+	int trian_num = 0;
+
+	ifstream myReadFile;
+	myReadFile.open(filename);
+	string output;
+
+	if (myReadFile.is_open()) {
+		while (!myReadFile.eof()) {
+			myReadFile >> output;
+			if (output == "v") vert_num++;
+			if (output == "f") trian_num++;
+		}
+	}
+	myReadFile.close();
+	myReadFile.open(filename);
+	float** vert;
+	vert = new float* [vert_num];
+	for (int i = 0; i < vert_num; i++) {
+		vert[i] = new float[3];
+	}
+	int** trian;
+	trian = new int* [trian_num];
+	for (int i = 0; i < trian_num; i++) {
+		trian[i] = new int[3];
+	}
+
+	int licz_vert = 0;
+	int licz_trian = 0;
+
+	while (!myReadFile.eof()) {
+		myReadFile >> output;
+		if (output == "v") {
+			myReadFile >> vert[licz_vert][0];
+			myReadFile >> vert[licz_vert][1];
+			myReadFile >> vert[licz_vert][2];
+			licz_vert++;
+		}
+		if (output == "f") {
+			myReadFile >> trian[licz_trian][0];
+			myReadFile >> trian[licz_trian][1];
+			myReadFile >> trian[licz_trian][2];
+			licz_trian++;
+		}
+		output.clear();
+	}
+
+	GLfloat* vertices = new GLfloat[trian_num * 9];
+	int vert_current = 0;
+	for (int i = 0; i < trian_num; i++) {
+		vertices[vert_current] = vert[trian[i][0] - 1][0];
+		vertices[vert_current + 1] = vert[trian[i][0] - 1][1];
+		vertices[vert_current + 2] = vert[trian[i][0] - 1][2];
+
+		vertices[vert_current + 3] = vert[trian[i][1] - 1][0];
+		vertices[vert_current + 4] = vert[trian[i][1] - 1][1];
+		vertices[vert_current + 5] = vert[trian[i][1] - 1][2];
+		
+		vertices[vert_current + 6] = vert[trian[i][2] - 1][0];
+		vertices[vert_current + 7] = vert[trian[i][2] - 1][1];
+		vertices[vert_current + 8] = vert[trian[i][2] - 1][2];
+
+		vert_current += 9;
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * trian_num * 9, vertices, GL_STATIC_DRAW);
+
+	punkty = trian_num * 9;
+
+	delete[] vertices;
+	for (int i = 0; i < vert_num; i++) {
+		delete[] vert[i];
+	}
+	delete[] vert;
+	for (int i = 0; i < trian_num; i++) {
+		delete[] trian[i];
+	}
+	delete[] trian;
+}
+
+void LoadModelOBJ_EBO(int& punkty, const char* filename, int buffer_vbo, int buffer_ebo) {
+	int vert_num = 0;
+	int trian_num = 0;
+
+	ifstream myReadFile;
+	myReadFile.open(filename);
+	string output;
+
+	if (myReadFile.is_open()) {
+		while (!myReadFile.eof()) {
+			myReadFile >> output;
+			if (output == "v") vert_num++;
+			if (output == "f") trian_num++;
+		}
+	}
+
+	myReadFile.close();
+	myReadFile.open(filename);
+	float* vert;
+	vert = new float[vert_num * 3];
+	int* element;
+	element = new int[trian_num * 3];
+
+	int licz_vert = 0;
+	int licz_element = 0;
+	int temp = 0;
+
+	while (!myReadFile.eof()) {
+		myReadFile >> output;
+		if (output == "v") {
+			myReadFile >> vert[licz_vert];
+			myReadFile >> vert[licz_vert+1];
+			myReadFile >> vert[licz_vert+2];
+			licz_vert += 3;
+		}
+		if (output == "f") {
+			myReadFile >> temp;
+			temp--;
+			element[licz_element] = temp;
+			myReadFile >> temp;
+			temp--;
+			element[licz_element+1] = temp;
+			myReadFile >> temp;
+			temp--;
+			element[licz_element+2] = temp;
+			licz_element += 3;
+		}
+		output.clear();
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, buffer_vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vert_num * 3, vert, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer_ebo);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GLuint) * trian_num * 3, element, GL_STATIC_DRAW);
+	punkty = trian_num * 3;
+	delete[] vert;
+	delete[] element;
+}
+
 //void okrag(int boki, int buffer) {
 //	if (boki < 3) return;
 //	
@@ -279,6 +421,8 @@ int main()
 	glewExperimental = GL_TRUE;
 	glewInit();
 
+	
+
 	// Utworzenie VAO (Vertex Array Object)
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -289,10 +433,21 @@ int main()
 	GLuint vbo;
 	glGenBuffers(1, &vbo);
 
+	//Element buffer object
+	GLuint ebo;
+	glGenBuffers(1, &ebo);
+
+
 	//int boki = 6;
 	//okrag(boki, vbo);
 
-	kostka(vbo);
+	//kostka(vbo);
+
+	int punkty = 0;
+	
+	LoadModelOBJ(punkty, "untitled2.obj", vbo);
+
+	//LoadModelOBJ_EBO(punkty, "test2.obj", vbo, ebo);
 
 	// Utworzenie i skompilowanie shadera wierzchołków
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -343,13 +498,13 @@ int main()
 	// Specifikacja formatu danych wierzchołkowych
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), 0);
-	GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
-	glEnableVertexAttribArray(colAttrib);
-	glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+	//GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
+	//glEnableVertexAttribArray(colAttrib);
+	//glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 	GLint TexCoord = glGetAttribLocation(shaderProgram, "aTexCoord");
-	glEnableVertexAttribArray(TexCoord);
-	glVertexAttribPointer(TexCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+	//glEnableVertexAttribArray(TexCoord);
+	//glVertexAttribPointer(TexCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -418,11 +573,12 @@ int main()
 	// Rozpoczęcie pętli zdarzeń
 	bool running = true;
 	double dist = 14.5;
-	int tryb=0;
+	int tryb=2;
 	sf::Clock clock;
 
 	window.setFramerateLimit(60);
 	sf::Time time;
+
 
 	int licznik = 0;
 	while (running) {
@@ -527,43 +683,60 @@ int main()
 			glDrawBuffer(GL_BACK_LEFT);
 			StereoProjection(shaderProgram, -6, 6, -4.8, 4.8, 12.99, -100, 0, dist, -0.05);
 			glColorMask(true, false, false, false);
-			glBindTexture(GL_TEXTURE_2D, texture2);
-			glDrawArrays(prymityw, 0, 24);
-			glBindTexture(GL_TEXTURE_2D, texture1);
-			glDrawArrays(prymityw, 24, 36);
+
+			//glBindTexture(GL_TEXTURE_2D, texture2);
+			//glDrawArrays(prymityw, 0, 24);
+			//glBindTexture(GL_TEXTURE_2D, texture1);
+			//glDrawArrays(prymityw, 24, 36);
+
+			glDrawArrays(prymityw, 0, punkty);
 			glClear(GL_DEPTH_BUFFER_BIT);
 
 			glDrawBuffer(GL_BACK_RIGHT);
 			StereoProjection(shaderProgram, -6, 6, -4.8, 4.8, 12.99, -100, 0, dist, 0.05);
 			glColorMask(false, false, true, false);
-			glBindTexture(GL_TEXTURE_2D, texture2);
-			glDrawArrays(prymityw, 0, 24);
-			glBindTexture(GL_TEXTURE_2D, texture1);
-			glDrawArrays(prymityw, 24, 36);
+
+			//glBindTexture(GL_TEXTURE_2D, texture2);
+			//glDrawArrays(prymityw, 0, 24);
+			//glBindTexture(GL_TEXTURE_2D, texture1);
+			//glDrawArrays(prymityw, 24, 36);
+
+			glDrawArrays(prymityw, 0, punkty);
 			glColorMask(true, true, true, true);
 			break;
 
 		case 1:
 			glViewport(0, 0, window.getSize().x/2, window.getSize().y);
 			StereoProjection(shaderProgram, -6, 6, -4.8, 4.8, 12.99, -100, 0, 13, -0.05);
-			glBindTexture(GL_TEXTURE_2D, texture2);
-			glDrawArrays(prymityw, 0, 24);
-			glBindTexture(GL_TEXTURE_2D, texture1);
-			glDrawArrays(prymityw, 24, 36);
+
+			//glBindTexture(GL_TEXTURE_2D, texture2);
+			//glDrawArrays(prymityw, 0, 24);
+			//glBindTexture(GL_TEXTURE_2D, texture1);
+			//glDrawArrays(prymityw, 24, 36);
+
+			glDrawArrays(prymityw, 0, punkty);
 
 			glViewport(window.getSize().x / 2, 0, window.getSize().x / 2, window.getSize().y);
 			StereoProjection(shaderProgram, -6, 6, -4.8, 4.8, 12.99, -100, 0, 13, 0.05);
-			glBindTexture(GL_TEXTURE_2D, texture2);
-			glDrawArrays(prymityw, 0, 24);
-			glBindTexture(GL_TEXTURE_2D, texture1);
-			glDrawArrays(prymityw, 24, 36);
+
+			//glBindTexture(GL_TEXTURE_2D, texture2);
+			//glDrawArrays(prymityw, 0, 24);
+			//glBindTexture(GL_TEXTURE_2D, texture1);
+			//glDrawArrays(prymityw, 24, 36);
+
+			glDrawArrays(prymityw, 0, punkty);
 			break;
 		case 2:
 			glViewport(0, 0, window.getSize().x, window.getSize().y);
-			glBindTexture(GL_TEXTURE_2D, texture2);
-			glDrawArrays(prymityw, 0, 24);
+
+			//glBindTexture(GL_TEXTURE_2D, texture2);
+			//glDrawArrays(prymityw, 0, 24);
 			glBindTexture(GL_TEXTURE_2D, texture1);
-			glDrawArrays(prymityw, 24, 36);
+			//glDrawArrays(prymityw, 24, 36);
+
+			glDrawArrays(prymityw, 0, punkty);
+			//glDrawElements(prymityw, punkty, GL_UNSIGNED_INT, 0);
+
 			break;
 		}
 
