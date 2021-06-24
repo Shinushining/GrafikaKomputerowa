@@ -20,7 +20,10 @@ const GLchar* vertexSource = R"glsl(
 in vec3 position;
 in vec3 color;
 in vec2 aTexCoord;
+in vec3 aNormal;
 out vec2 TexCoord;
+out vec3 Normal;
+out vec3 FragPos;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
@@ -29,6 +32,8 @@ void main(){
 	Color = color;
 	TexCoord=aTexCoord;
 	gl_Position = proj*view*model*vec4(position, 1.0);
+	FragPos=vec3(model*vec4(position,1.0));
+	Normal=aNormal;
 
 }
 )glsl";
@@ -36,15 +41,50 @@ void main(){
 const GLchar* fragmentSource = R"glsl(
 #version 150 core
 in vec3 Color;
+in vec3 Normal;
+in vec3 FragPos;
 out vec4 outColor;
 in vec2 TexCoord;
 uniform sampler2D texture1;
 uniform sampler2D texture2;
+uniform sampler2D texture3;
+uniform sampler2D texture4;
+
+uniform vec3 lightPos;
+uniform vec3 camPos;
+
 void main()
 {
+
+//ambient 
+float ambientStrength = 0.7;
+vec3 ambientlightColor = vec3(1.0,1.0,1.0);
+vec4 ambient = ambientStrength * vec4(ambientlightColor,1.0);
+
+//diff
+float diffuseStrength = 1.0;
+vec3 difflightColor = vec3(1.0,1.0,1.0);
+vec3 norm = normalize(Normal);
+vec3 lightDir = normalize(lightPos - FragPos);
+float diff = max(dot(norm,lightDir), 0.0);
+vec3 diffvec = diff*difflightColor*diffuseStrength;
+vec4 diffuse = vec4(diffvec, 1.0);
+
+//spec
+float specularStrength = 1.0;
+vec3 specularlightColor = vec3(1.0, 1.0, 1.0);
+
+vec3 viewDir = normalize(camPos-FragPos);
+vec3 reflectDir = reflect(-lightDir,norm);
+float spec = pow(max(dot(viewDir,reflectDir),0.0),32);
+
+vec4 specular = specularStrength * spec * vec4(specularlightColor,1.0);
+
+outColor = (ambient+diffuse+specular)*texture(texture1, TexCoord);
+
 //outColor=texture(texture1,TexCoord);
 //outColor = vec4(Color, 1.0);
-outColor = vec4(1.0,1.0,1.0,1.0);
+//outColor = vec4(1.0,1.0,1.0,1.0);
 }
 )glsl";
 
@@ -70,14 +110,14 @@ void kostka(int buffer) {
 		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-	
+
 		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 0.0f,
 		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
 		0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 1.0f,
 		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 1.0f,
 		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-	
+
 		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
 		-0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
 		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
@@ -91,30 +131,30 @@ void kostka(int buffer) {
 		0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  1.0f, 1.0f,
 		0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
 		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-		
-		
+
+
 		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
 		0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
 		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
 		0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
 		-0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
 		-0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
-		
+
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f,
 		0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,  1.0f, 0.0f,
 		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
 		0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,  1.0f, 1.0f,
 		-0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,  0.0f, 0.0f
-		
-	
+
+
 	};
 
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * punkty * 8, vertices, GL_STATIC_DRAW);
 }
 
-void ustawKamereMysz(GLint _uniView,float _elapsedTime, const sf::Window& _window) {
+void ustawKamereMysz(GLint _uniView, float _elapsedTime, const sf::Window& _window) {
 	sf::Vector2i localPosition = sf::Mouse::getPosition(_window);
 
 	sf::Vector2i position;
@@ -126,7 +166,7 @@ void ustawKamereMysz(GLint _uniView,float _elapsedTime, const sf::Window& _windo
 		position.y = localPosition.y;
 		relocation = true;
 	}
-	if (localPosition.x >= _window.getSize().x-1) {
+	if (localPosition.x >= _window.getSize().x - 1) {
 		position.x = 0;
 		position.y = localPosition.y;
 		relocation = true;
@@ -136,7 +176,7 @@ void ustawKamereMysz(GLint _uniView,float _elapsedTime, const sf::Window& _windo
 		position.x = localPosition.x;
 		relocation = true;
 	}
-	if (localPosition.y >= _window.getSize().y-1) {
+	if (localPosition.y >= _window.getSize().y - 1) {
 		position.y = 0;
 		position.x = localPosition.x;
 		relocation = true;
@@ -296,7 +336,7 @@ void LoadModelOBJ(int& punkty, const char* filename, int buffer) {
 		vertices[vert_current + 3] = vert[trian[i][1] - 1][0];
 		vertices[vert_current + 4] = vert[trian[i][1] - 1][1];
 		vertices[vert_current + 5] = vert[trian[i][1] - 1][2];
-		
+
 		vertices[vert_current + 6] = vert[trian[i][2] - 1][0];
 		vertices[vert_current + 7] = vert[trian[i][2] - 1][1];
 		vertices[vert_current + 8] = vert[trian[i][2] - 1][2];
@@ -350,8 +390,8 @@ void LoadModelOBJ_EBO(int& punkty, const char* filename, int buffer_vbo, int buf
 		myReadFile >> output;
 		if (output == "v") {
 			myReadFile >> vert[licz_vert];
-			myReadFile >> vert[licz_vert+1];
-			myReadFile >> vert[licz_vert+2];
+			myReadFile >> vert[licz_vert + 1];
+			myReadFile >> vert[licz_vert + 2];
 			licz_vert += 3;
 		}
 		if (output == "f") {
@@ -360,10 +400,10 @@ void LoadModelOBJ_EBO(int& punkty, const char* filename, int buffer_vbo, int buf
 			element[licz_element] = temp;
 			myReadFile >> temp;
 			temp--;
-			element[licz_element+1] = temp;
+			element[licz_element + 1] = temp;
 			myReadFile >> temp;
 			temp--;
-			element[licz_element+2] = temp;
+			element[licz_element + 2] = temp;
 			licz_element += 3;
 		}
 		output.clear();
@@ -375,6 +415,161 @@ void LoadModelOBJ_EBO(int& punkty, const char* filename, int buffer_vbo, int buf
 	punkty = trian_num * 3;
 	delete[] vert;
 	delete[] element;
+}
+
+bool LoadModelOBJNormalsCoord(int& punkty_, const char* filename, int buffer, int* tabtekstur)
+{
+	int vert_num = 0;
+	int triangles = 0;
+	int normals = 0;
+	int coord_num = 0;
+
+	std::ifstream myReadFile;
+	myReadFile.open(filename);
+	std::string output;
+	if (myReadFile.is_open()) {
+		while (!myReadFile.eof()) {
+			myReadFile >> output;
+			if (output == "v") vert_num++;
+			if (output == "f") triangles++;
+			if (output == "vn") normals++;
+			if (output == "vt") coord_num++;
+		}
+	}
+
+	myReadFile.close();
+	myReadFile.open(filename);
+
+
+	float** vert;
+	vert = new float* [vert_num]; //przydzielenie pamięci na w wierszy
+
+	for (int i = 0; i < vert_num; i++)
+		vert[i] = new float[3];
+
+
+	int** trian;
+	trian = new int* [triangles]; //przydzielenie pamięci na w wierszy
+
+	for (int i = 0; i < triangles; i++)
+		trian[i] = new int[9];
+
+	float** norm;
+	norm = new float* [normals]; //przydzielenie pamięci na w wierszy
+
+	for (int i = 0; i < normals; i++)
+		norm[i] = new float[3];
+
+	float** coord;
+	coord = new float* [coord_num]; //przydzielenie pamięci na w wierszy
+
+	for (int i = 0; i < coord_num; i++)
+		coord[i] = new float[2];
+
+	int licz_vert = 0;
+	int licz_triang = 0;
+	int licz_normals = 0;
+	int licz_coord = 0;
+	int count = 0;
+	int temp = 0;
+
+
+	while (!myReadFile.eof()) {
+		output = "";
+		myReadFile >> output;
+		if (output == "vn") { myReadFile >> norm[licz_normals][0]; myReadFile >> norm[licz_normals][1]; myReadFile >> norm[licz_normals][2]; licz_normals++; }
+		if (output == "v") { myReadFile >> vert[licz_vert][0]; myReadFile >> vert[licz_vert][1]; myReadFile >> vert[licz_vert][2]; licz_vert++; }
+		if (output == "vt") { myReadFile >> coord[licz_coord][0]; myReadFile >> coord[licz_coord][1]; licz_coord++; }
+		if (output == "o") { tabtekstur[count] = temp * 3; temp = 0; count++; }
+		if (output == "f") {
+
+			for (int i = 0; i < 9; i += 3)
+			{
+				std::string s;
+				myReadFile >> s;
+				std::stringstream ss(s);
+
+				std::vector <std::string> el;
+				std::string item;
+
+
+				while (getline(ss, item, '/')) {
+					el.push_back(item);
+				}
+				trian[licz_triang][i] = std::stoi(el[0]);
+				trian[licz_triang][i + 1] = std::stoi(el[1]);
+				trian[licz_triang][i + 2] = std::stoi(el[2]);
+
+
+			}
+			temp++;
+			licz_triang++;
+		}
+	}
+	tabtekstur[count] = temp * 3;
+	GLfloat* vertices = new GLfloat[triangles * 24];
+
+	int vert_current = 0;
+
+	for (int i = 0; i < triangles; i++)
+	{
+		vertices[vert_current] = vert[trian[i][0] - 1][0];
+		vertices[vert_current + 1] = vert[trian[i][0] - 1][1];
+		vertices[vert_current + 2] = vert[trian[i][0] - 1][2];
+		vertices[vert_current + 3] = norm[trian[i][2] - 1][0];
+		vertices[vert_current + 4] = norm[trian[i][2] - 1][1];
+		vertices[vert_current + 5] = norm[trian[i][2] - 1][2];
+		vertices[vert_current + 6] = coord[trian[i][1] - 1][0];
+		vertices[vert_current + 7] = coord[trian[i][1] - 1][1];
+
+		vertices[vert_current + 8] = vert[trian[i][3] - 1][0];
+		vertices[vert_current + 9] = vert[trian[i][3] - 1][1];
+		vertices[vert_current + 10] = vert[trian[i][3] - 1][2];
+		vertices[vert_current + 11] = norm[trian[i][5] - 1][0];
+		vertices[vert_current + 12] = norm[trian[i][5] - 1][1];
+		vertices[vert_current + 13] = norm[trian[i][5] - 1][2];
+		vertices[vert_current + 14] = coord[trian[i][4] - 1][0];
+		vertices[vert_current + 15] = coord[trian[i][4] - 1][1];
+
+		vertices[vert_current + 16] = vert[trian[i][6] - 1][0];
+		vertices[vert_current + 17] = vert[trian[i][6] - 1][1];
+		vertices[vert_current + 18] = vert[trian[i][6] - 1][2];
+		vertices[vert_current + 19] = norm[trian[i][8] - 1][0];
+		vertices[vert_current + 20] = norm[trian[i][8] - 1][1];
+		vertices[vert_current + 21] = norm[trian[i][8] - 1][2];
+		vertices[vert_current + 22] = coord[trian[i][7] - 1][0];
+		vertices[vert_current + 23] = coord[trian[i][7] - 1][1];
+
+		vert_current += 24;
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangles * 24, vertices, GL_STATIC_DRAW);
+
+	punkty_ = triangles * 3;
+
+	delete vertices;
+
+
+
+
+	for (int i = 0; i < vert_num; i++)
+		delete[] vert[i];
+	delete[] vert;
+
+	for (int i = 0; i < triangles; i++)
+		delete[] trian[i];
+	delete[] trian;
+
+	for (int i = 0; i < normals; i++)
+		delete[] norm[i];
+	delete[] norm;
+
+	for (int i = 0; i < coord_num; i++)
+		delete[] coord[i];
+	delete[] coord;
+
+	return 0;
 }
 
 //void okrag(int boki, int buffer) {
@@ -421,7 +616,7 @@ int main()
 	glewExperimental = GL_TRUE;
 	glewInit();
 
-	
+
 
 	// Utworzenie VAO (Vertex Array Object)
 	GLuint vao;
@@ -444,8 +639,11 @@ int main()
 	//kostka(vbo);
 
 	int punkty = 0;
-	
-	LoadModelOBJ(punkty, "untitled2.obj", vbo);
+	int tabtekstur[5];
+
+	LoadModelOBJNormalsCoord(punkty, "untitled.obj", vbo, tabtekstur);
+
+	//LoadModelOBJ(punkty, "untitled.obj", vbo);
 
 	//LoadModelOBJ_EBO(punkty, "test2.obj", vbo, ebo);
 
@@ -498,16 +696,19 @@ int main()
 	// Specifikacja formatu danych wierzchołkowych
 	GLint posAttrib = glGetAttribLocation(shaderProgram, "position");
 	glEnableVertexAttribArray(posAttrib);
-	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), 0);
 	//GLint colAttrib = glGetAttribLocation(shaderProgram, "color");
 	//glEnableVertexAttribArray(colAttrib);
 	//glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	GLint NorAttrib = glGetAttribLocation(shaderProgram, "aNormal");
+	glEnableVertexAttribArray(NorAttrib);
+	glVertexAttribPointer(NorAttrib, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
 	GLint TexCoord = glGetAttribLocation(shaderProgram, "aTexCoord");
-	//glEnableVertexAttribArray(TexCoord);
-	//glVertexAttribPointer(TexCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(TexCoord);
+	glVertexAttribPointer(TexCoord, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
 
 	glm::mat4 model = glm::mat4(1.0f);
-	model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	//model = glm::rotate(model, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 
 	GLint uniTrans = glGetUniformLocation(shaderProgram, "model");
 	glUniformMatrix4fv(uniTrans, 1, GL_FALSE, glm::value_ptr(model));
@@ -521,7 +722,10 @@ int main()
 	GLint prymityw = GL_TRIANGLES;
 	//GLint mouse_x = 0;
 	//GLint mouse_y = 0;
-	
+
+	glm::vec3 lightPos(0.0f, 0.0f, 7.0f);
+	GLint uniLightPos = glGetUniformLocation(shaderProgram, "lightPos");
+	glUniform3fv(uniLightPos, 1, glm::value_ptr(lightPos));
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -567,13 +771,57 @@ int main()
 	}
 	stbi_image_free(data);
 
+	unsigned int texture3;
+
+	glGenTextures(1, &texture3);
+	glBindTexture(GL_TEXTURE_2D, texture3);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+	stbi_set_flip_vertically_on_load(true);
+	data = stbi_load("crate.bmp", &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		cout << "Failed to load texture" << endl;
+	}
+	stbi_image_free(data);
+
+	unsigned int texture4;
+
+	glGenTextures(1, &texture4);
+	glBindTexture(GL_TEXTURE_2D, texture4);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+	stbi_set_flip_vertically_on_load(true);
+	data = stbi_load("metal.bmp", &width, &height, &nrChannels, 0);
+	if (data) {
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else {
+		cout << "Failed to load texture" << endl;
+	}
+	stbi_image_free(data);
+
 	glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
 	glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texture3"), 2);
+	glUniform1i(glGetUniformLocation(shaderProgram, "texture4"), 3);
 
 	// Rozpoczęcie pętli zdarzeń
 	bool running = true;
 	double dist = 14.5;
-	int tryb=2;
+	int tryb = 2;
 	sf::Clock clock;
 
 	window.setFramerateLimit(60);
@@ -655,12 +903,15 @@ int main()
 
 			case sf::Event::MouseMoved:
 				ustawKamereMysz(uniView, time.asMicroseconds(), window);
+				GLint uniCamPos = glGetUniformLocation(shaderProgram, "camPos");
+				glUniform3fv(uniCamPos, 1, glm::value_ptr(cameraPos));
 				break;
 			}
 		}
 
 		ustawKamereKlawisze(uniView, time.asMicroseconds());
-
+		GLint uniCamPos = glGetUniformLocation(shaderProgram, "camPos");
+		glUniform3fv(uniCamPos, 1, glm::value_ptr(cameraPos));
 
 		// Nadanie scenie koloru czarnego
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -669,7 +920,7 @@ int main()
 		// Narysowanie wielokąta na podstawie dowolnej ilości wierzchołków
 		//glDrawArrays(prymityw, 0, boki);
 		//glDrawArrays(prymityw, 0, 36);
-		
+
 		//ustawianie wielu tekstur
 		glActiveTexture(GL_TEXTURE0);
 		//glBindTexture(GL_TEXTURE_2D, texture2);
@@ -706,7 +957,7 @@ int main()
 			break;
 
 		case 1:
-			glViewport(0, 0, window.getSize().x/2, window.getSize().y);
+			glViewport(0, 0, window.getSize().x / 2, window.getSize().y);
 			StereoProjection(shaderProgram, -6, 6, -4.8, 4.8, 12.99, -100, 0, 13, -0.05);
 
 			//glBindTexture(GL_TEXTURE_2D, texture2);
@@ -727,15 +978,20 @@ int main()
 			glDrawArrays(prymityw, 0, punkty);
 			break;
 		case 2:
+			glActiveTexture(GL_TEXTURE0);
 			glViewport(0, 0, window.getSize().x, window.getSize().y);
 
-			//glBindTexture(GL_TEXTURE_2D, texture2);
-			//glDrawArrays(prymityw, 0, 24);
 			glBindTexture(GL_TEXTURE_2D, texture1);
-			//glDrawArrays(prymityw, 24, 36);
+			glDrawArrays(prymityw, 0, tabtekstur[1]);
 
-			glDrawArrays(prymityw, 0, punkty);
-			//glDrawElements(prymityw, punkty, GL_UNSIGNED_INT, 0);
+			glBindTexture(GL_TEXTURE_2D, texture2);
+			glDrawArrays(prymityw, tabtekstur[1], tabtekstur[2]);
+
+			glBindTexture(GL_TEXTURE_2D, texture3);
+			glDrawArrays(prymityw, tabtekstur[1] + tabtekstur[2], tabtekstur[3]);
+
+			glBindTexture(GL_TEXTURE_2D, texture4);
+			glDrawArrays(prymityw, tabtekstur[1] + tabtekstur[2] + tabtekstur[3], tabtekstur[4]);
 
 			break;
 		}
